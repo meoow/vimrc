@@ -49,14 +49,33 @@ set splitbelow
 set splitright
 hi SpecialKey guifg=#B8B8F8
 
-if has('win64')
-	let g:python3_host_prog = expand('$LOCALAPPDATA/nvim/python3/python.exe')
+func! s:isfile(p)
+	return findfile(a:p) != ""
+endfunc
+
+if has('win64') 
+	let py3exe = expand('$LOCALAPPDATA/nvim/python3/python.exe')
+	let py2exe = expand('$LOCALAPPDATA/nvim/python2/python.exe')
+	if s:isfile(py3exe)
+		let g:python3_host_prog = py3exe
+	else
+		let g:loaded_python3_provider = 0
+	endif
+	if s:isfile(py2exe)
+		let g:python_host_prog = py2exe
+	else
+		let g:loaded_python_provider = 0
+	endif
 	let $NVIM_PYTHON_LOG_FILE = expand('$LOCALAPPDATA/nvim/python.log')
 elseif has('unix')
-	let g:python3_host_prog = expand('$HOME/.config/nvim/pypy3/bin/pypy3')
+	let py3exe = expand('$HOME/.config/nvim/pypy3/bin/pypy3')
+	if s:isfile(py3exe)
+		let g:python3_host_prog = py3exe
+	else
+		let g:loaded_python3_provider = 0
+	endif
 	let $NVIM_PYTHON_LOG_FILE = expand('$HOME/.config/nvim/python.log')
 endif
-let g:loaded_python_provider = 0
 
 syntax enable
 filetype plugin on
@@ -141,7 +160,11 @@ augroup END "}}}
 "}}}
 
 " Plug {{{
-silent! call plug#begin(expand('$LOCALAPPDATA/nvim/plug'))
+if has('win32')
+	silent! call plug#begin(expand('$LOCALAPPDATA/nvim/plug'))
+elseif has('unix')
+	silent! call plug#begin(expand('$HOME/.config/nvim/plug'))
+endif
 
 Plug 'roxma/nvim-yarp'
 Plug 'vim-scripts/c.vim'
@@ -245,21 +268,48 @@ func! Tabline() "{{{
   let tpnr = tabpagenr('$')
   let tpnrc = tabpagenr()
   if tpnr > 1
-	  let closeb = ' %999X✗ '
+	  let closeb = ' %999X✗%X '
   else
 	  let closeb = ' '
   endif
   for i in range(tpnr)
     let tab = i + 1
     let bufna = bufname(tabpagebuflist(tab)[tabpagewinnr(tab) - 1])
-	call add(s,printf(
-				\"%%%dT%s %s",
-				\tab,
+	call add(s,
+				\printf(
+				\"%%%dT%s %s%s", tab,
 				\tab==tpnrc?'%#TabLineSel#':'%#TabLine#',
-				\bufna!=''?fnamemodify(bufna, ':t').closeb:'[No Name]'.closeb
+				\bufna!=''?fnamemodify(bufna, ':t'):'[No Name]',
+				\closeb
 				\)
 				\)
     " let bufmodified = getbufvar(bufnr, "&mod")
+  endfor
+
+  call add(s, '%#TabLineFill#%X')
+  return join(s,"")
+endfunc "}}}
+
+func! TablineOSX() "{{{
+  let s = []
+  let tpnr = tabpagenr('$')
+  let tpnrc = tabpagenr()
+  if tpnr > 1
+	  let closeb = '%999X ✗%X '
+  else
+	  let closeb = ' '
+  endif
+  for i in range(tpnr)
+    let tab = i + 1
+    let bufna = bufname(tabpagebuflist(tab)[tabpagewinnr(tab) - 1])
+	call add(s,
+				\printf(
+				\"%%%dT%s%s%s ", tab,
+				\tab==tpnrc?'%#TabLineSel#':'%#TabLine#',
+				\closeb,
+				\bufna!=''?fnamemodify(bufna, ':t'):'[No Name]',
+				\)
+				\)
   endfor
 
   call add(s, '%#TabLineFill#%X')

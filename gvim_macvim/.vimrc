@@ -9,6 +9,10 @@ func! RegEscape(str) "{{{
 	return escape(a:str,'^$.*?/\[]')
 endfunc "}}}
 
+func! s:isfile(p)
+	return findfile(a:p) != ""
+endfunc
+
 func! AddToPATH(dir,front) "{{{
 	if ! isdirectory(a:dir)
 		return
@@ -87,6 +91,7 @@ set viminfo='100,<100,:20,s500,h,%
 " %:restore buffer list when started without file name argument
 set browsedir=buffer
 set previewheight=5
+set splitbelow splitright
 hi SpecialKey guifg=#B8B8F8
 
 "}}}
@@ -97,8 +102,26 @@ if has('unix')
 endif "}}}
 
 if has('win64')
-	let &pythonhome=fnamemodify(expand('$VIM/../python-2.7.18.amd64'),':p')
-	let &pythondll=fnamemodify(expand('$VIM/../python-2.7.18.amd64/python27.dll'),':p')
+	let pythonhome=fnamemodify(expand('$VIM/../python-2.7.18.amd64'),':p')
+	let pythondll=fnamemodify(expand('$VIM/../python-2.7.18.amd64/python27.dll'),':p')
+	if isdirectory(pythonhome) && s:isfile(pythondll)
+		let &pythonhome=pythonhome
+		let &pythondll=pythondll
+	endif
+elseif has('win32')
+	let pythonhome=fnamemodify(expand('$VIM/../python-2.7.18'),':p')
+	let pythondll=fnamemodify(expand('$VIM/../python-2.7.18/python27.dll'),':p')
+	if isdirectory(pythonhome) && s:isfile(pythondll)
+		let &pythonhome=pythonhome
+		let &pythondll=pythondll
+	endif
+" elseif has('macvim') && has('python3')
+" 	let pythonthreehome=g:vim_config_dir . '/pypy3'
+" 	let pythonthreedll=pythonthreehome . '/bin/libpypy3-c.dylib'
+" 	if isdirectory(pythonthreehome) && s:isfile(pythonthreedll)
+" 		let &pythonthreehome=pythonthreehome
+" 		let &pythonthreedll=pythonthreedll
+" 	endif
 endif
 
 "{{{ gui configuration
@@ -161,7 +184,6 @@ if s:vundle==1
 	Plugin 'Lokaltog/vim-easymotion' " \\w \\f
 "	Plugin 'Konfekt/FastFold'
 	Plugin 'tpope/vim-characterize' " [n]ga
-	Plugin 'vim-scripts/indentpython.vim'
 	Plugin 'ctrlpvim/ctrlp.vim' " [n]<c-p> browse files
 	Plugin 'mattn/emmet-vim' "<c-y>,
 	Plugin 'Valloric/MatchTagAlways'
@@ -921,7 +943,7 @@ function! s:bufnew_b_vars() "{{{
 	if has('win32') | let b:stlsep = '│' | else | let b:stlsep = '┊' | endif
 endfunc "}}}
 function! StatusLine() "{{{
-	return s:STLColor[mode()]."%F%r%{b:buffer_num}".s:MIColor[mode()]."%{(&mod==1)?'⁺':''}%*".s:STLColor[mode()]."%=%{(&co>70)?b:stlsep.strftime('%H:%M'):''}%{b:stlsep}%{b:buffer_enc}%{b:stlsep}%{toupper(&ff[0])}%{b:stlsep}%2{b:buffer_ft}%{b:stlsep}%5(%l,%c%)┊%L%*"
+	return s:STLColor[mode()]."%F%r%{b:buffer_num}".s:MIColor[mode()]."%{(&mod==1)?'⁺':''}%*".s:STLColor[mode()]."%=%{(&co>70)?b:stlsep.strftime('%H:%M'):''}%{b:stlsep}%{b:buffer_enc}%{b:stlsep}%{toupper(&ff[0])}%{b:stlsep}%2{b:buffer_ft}%{b:stlsep}%5(%l,%c%)%{b:stlsep}%L%*"
 endfunc "}}}
 function! StatusLineTerm() "{{{
 	return "%F%r%{(&mod==1)?'+':''}%*%=|%n%{(&co>70)?strftime('|%H:%M'):''}|%{b:buffer_enc}|%{toupper(&ff[0])}|%2{b:buffer_ft}|%5(%l,%c%)|%L%*"

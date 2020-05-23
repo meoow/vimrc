@@ -1,7 +1,12 @@
-if has('win32')
 GuiTabline 0
+
+if has('win32')
 GuiPopupmenu 0
 GuiLinespace 1
+endif
+
+if has('macunix')
+GuiScrollBar 1
 endif
 
 if has('mac')
@@ -15,9 +20,12 @@ set mousehide "hide mouse when typing
 set mouse=a
 set list "show invisible chars
 set listchars+=tab:┊┈
-if has('win32')
-	set tabline=%!Tabline()
+if has('macunix')
+set tabline=%!TablineOSX()
+else
+set tabline=%!Tabline()
 endif
+
 hi TabLineFill guifg=#487897
 
 "{{{ general remap keys
