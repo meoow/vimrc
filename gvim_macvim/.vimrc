@@ -1,42 +1,7 @@
-" global nvim config dir "{{{
-if has("unix")
-	let g:vim_config_dir = fnameescape(expand("$HOME/.vim"))
-elseif has("win32")
-	let g:vim_config_dir = fnameescape(expand("$USERPROFILE/vimfiles"))
-endif "}}}
-
-func! RegEscape(str) "{{{
-	return escape(a:str,'^$.*?/\[]')
-endfunc "}}}
-
-func! s:isfile(p)
-	return findfile(a:p) != ""
-endfunc
-
-func! AddToPATH(dir,front) "{{{
-	if ! isdirectory(a:dir)
-		return
-	endif
-	if has('unix')
-		let psep = ':'
-		let nsep = '/'
-	elseif has('win32')
-		let psep = ';'
-		let nsep = '\\'
-	else
-		return
-	endif
-	let newdir = substitute(fnamemodify(a:dir,':p'),nsep.'$','','')
-	let pathList = split($PATH,psep)
-	if match(pathList,'^'.RegEscape(newdir).'$') == -1
-		if a:front
-			let $PATH = newdir.psep.$PATH
-		else
-			let $PATH .= psep.newdir
-		endif
-	endif
-endfunc "}}}
-
+" Changlog
+" 2020-08-17: minor change, move from Vundle to plug.vim
+" 2020-08-17: Add VimCompletesMe if neocomplete not support high version
+"
 "{{{ general configuration
 set fileformat=unix
 set nocompatible
@@ -91,17 +56,83 @@ set viminfo='100,<100,:20,s500,h,%
 " %:restore buffer list when started without file name argument
 set browsedir=buffer
 set previewheight=5
-set splitbelow splitright
 hi SpecialKey guifg=#B8B8F8
 
 "}}}
 
-" add local unix bin to PATH {{{
-if has('unix')
-	call AddToPATH(expand('~/bin'),0)
+if has("unix") " global vim config dir {{{
+	let g:vim_config_dir = fnameescape(expand("$HOME/.vim"))
+elseif has("win32")
+	let g:vim_config_dir = fnameescape(expand("$USERPROFILE/vimfiles"))
 endif "}}}
 
-if has('win64')
+func! RegEscape(str) "{{{
+	return escape(a:str,'^$.*?/\[]')
+endfunc "}}}
+
+func! s:isfile(p) "{{{
+	return findfile(a:p) != ""
+endfunc
+"}}}
+
+func! AddToPATH(dir,front) "{{{
+	if ! isdirectory(a:dir)
+		return
+	endif
+	if has('unix')
+		let psep = ':'
+		let nsep = '/'
+	elseif has('win32')
+		let psep = ';'
+		let nsep = '\\'
+	else
+		return
+	endif
+	let newdir = substitute(fnamemodify(a:dir,':p'),nsep.'$','','')
+	let pathList = split($PATH,psep)
+	if match(pathList,'^'.RegEscape(newdir).'$') == -1
+		if a:front
+			let $PATH = newdir.psep.$PATH
+		else
+			let $PATH .= psep.newdir
+		endif
+	endif
+endfunc "}}}
+
+func! RegEscape(str) "{{{
+	return escape(a:str,'^$.*?/\[]')
+endfunc "}}}
+
+func! AddToPATH(dir,front) "{{{
+	if ! isdirectory(a:dir)
+		return
+	endif
+	if has('unix')
+		let psep = ':'
+		let nsep = '/'
+	elseif has('win32')
+		let psep = ';'
+		let nsep = '\\'
+	else
+		return
+	endif
+	let newdir = substitute(fnamemodify(a:dir,':p'),nsep.'$','','')
+	let pathList = split($PATH,psep)
+	if match(pathList,'^'.RegEscape(newdir).'$') == -1
+		if a:front
+			let $PATH = newdir.psep.$PATH
+		else
+			let $PATH .= psep.newdir
+		endif
+	endif
+endfunc "}}}
+
+func! s:isfile(p)"{{{
+	return findfile(a:p) != ""
+endfunc
+"}}}
+
+if has('win64') "{{{ python config
 	let pythonhome=fnamemodify(expand('$VIM/../python-2.7.18.amd64'),':p')
 	let pythondll=fnamemodify(expand('$VIM/../python-2.7.18.amd64/python27.dll'),':p')
 	if isdirectory(pythonhome) && s:isfile(pythondll)
@@ -115,14 +146,13 @@ elseif has('win32')
 		let &pythonhome=pythonhome
 		let &pythondll=pythondll
 	endif
-" elseif has('macvim') && has('python3')
-" 	let pythonthreehome=g:vim_config_dir . '/pypy3'
-" 	let pythonthreedll=pythonthreehome . '/bin/libpypy3-c.dylib'
-" 	if isdirectory(pythonthreehome) && s:isfile(pythonthreedll)
-" 		let &pythonthreehome=pythonthreehome
-" 		let &pythonthreedll=pythonthreedll
-" 	endif
 endif
+"}}}
+
+" add local unix bin to PATH {{{
+if has('unix')
+	call AddToPATH(expand('~/bin'),0)
+endif "}}}
 
 "{{{ gui configuration
 if has("gui_running")
@@ -137,14 +167,14 @@ if has("gui_running")
 	set list "show invisible chars
 	set listchars+=tab:│┈
 	if has("macunix")
-		set guifont=Menlo:h14 "use set guifont=* to select
+		set guifont=CascadiaCode-Regular:h14,Menlo:h14,Monaco:h14, "use set guifont=* to select
 	endif
 	if has("win32")
 		set tabline=%!Tabline()
 		set guioptions-=e "e:gui tab
 		"set clipboard=unnamed
 		if !exists('s:_gui_opened')|set lines=26|endif
-		set guifont=Source_Code_Pro:h11,Courier\ New:h11
+		set guifont=Cascadia_Code:h11:cANSI:qDRAFT,Source_Code_Pro:h11,Consolas:h11,Courier\ New:h11
 	else
 		if !exists('s:_gui_opened')
 			set lines=30
@@ -159,57 +189,99 @@ endif
 syntax enable
 filetype off
 "{{{ vbundle 
-let s:vundle=0
-let s:vundledir = g:vim_config_dir."/bundle/Vundle.vim"
-if finddir(s:vundledir) != ""
-	exe "set rtp+=".s:vundledir
-	let s:vundle=1
-endif
+"let s:vundle=0
+"let s:vundledir = g:vim_config_dir."/bundle/Vundle.vim"
+"if finddir(s:vundledir) != ""
+"	exe "set rtp+=".s:vundledir
+"	let s:vundle=1
+"endif
 " begin vundle {{{
-if s:vundle==1
-	call vundle#begin(g:vim_config_dir."/bundle")
-	Plugin 'VundleVim/Vundle.vim'
-	Plugin 'scrooloose/syntastic'
-	Plugin 'c.vim'
-	Plugin 'lfilho/cosco.vim' " VIM colon and semicolon insertion bliss 
-	Plugin 'renamer.vim'
-	if has('patch-8.0.1453')
-		Plugin 'fatih/vim-go'
+"if s:vundle==1
+"	call vundle#begin(g:vim_config_dir."/bundle")
+" 	Plugin 'VundleVim/Vundle.vim'
+" 	Plugin 'scrooloose/syntastic'
+" 	Plugin 'c.vim'
+" 	Plugin 'lfilho/cosco.vim' " VIM colon and semicolon insertion bliss 
+" 	Plugin 'renamer.vim'
+" 	if has('patch-8.0.1453')
+" 		Plugin 'fatih/vim-go'
+" 	endif
+" 	Plugin 'tComment' "[v]gc [n]gcc
+" 	Plugin 'bash-support.vim',{'pinned':1}
+" 	Plugin 'perl-support.vim',{'pinned':1}
+" 	Plugin 'terryma/vim-multiple-cursors' " <c-n> search and select multiple
+" 	Plugin 'majutsushi/tagbar' " :Tagbar
+" 	Plugin 'Lokaltog/vim-easymotion' " \\w \\f
+" "	Plugin 'Konfekt/FastFold'
+" 	Plugin 'tpope/vim-characterize' " [n]ga
+" 	Plugin 'vim-scripts/indentpython.vim'
+" 	Plugin 'ctrlpvim/ctrlp.vim' " [n]<c-p> browse files
+" 	Plugin 'mattn/emmet-vim' "<c-y>,
+" 	Plugin 'Valloric/MatchTagAlways'
+" "	Plugin 'junegunn/fzf.vim'
+" 	Plugin 'tpope/vim-eunuch' " Delete Unlink Move Rename Chmod Mkdir Cfind Wall SudoWrite SudoEdit
+" 	Plugin 'tpope/vim-surround' " cs ds 
+" 	if $TERM!~"^vt"
+" 		if has("lua") && has("patch-7.3.885")
+" 				Plugin 'Shougo/neocomplete'
+" 		endif
+" 	endif
+" 	if has('win32')
+" 		Plugin 'Shougo/vimproc.vim'
+" 		Plugin 'Shougo/vimshell.vim'
+" 		Plugin 'Shougo/unite.vim'
+" 	endif
+" 	Plugin 'arzg/vim-colors-xcode'
+"	call vundle#end()
+"endif
+"}}}
+"}}}
+"
+" Plug {{{
+if s:isfile(g:vim_config_dir.'/autoload/plug.vim')
+	silent! call plug#begin(g:vim_config_dir.'/plug')
+ 	Plug 'scrooloose/syntastic'
+ 	Plug 'vim-scripts/c.vim'
+ 	Plug 'lfilho/cosco.vim' " VIM colon and semicolon insertion bliss 
+ 	Plug 'vim-scripts/renamer.vim'
+ 	Plug 'vim-scripts/tComment' "[v]gc [n]gcc
+ 	Plug 'vim-scripts/bash-support.vim'
+ 	Plug 'vim-scripts/perl-support.vim'
+ 	Plug 'vim-scripts/indentpython.vim'
+ 	Plug 'vim-scripts/ctrlp.vim' " [n]<c-p> browse files
+ 	Plug 'terryma/vim-multiple-cursors' " <c-n> search and select multiple
+ 	Plug 'majutsushi/tagbar' " :Tagbar
+ 	Plug 'Lokaltog/vim-easymotion' " \\w \\f
+ 	Plug 'tpope/vim-characterize' " [n]ga
+ 	Plug 'mattn/emmet-vim' "<c-y>,
+ 	Plug 'tpope/vim-eunuch' " Delete Unlink Move Rename Chmod Mkdir Cfind Wall SudoWrite SudoEdit
+ 	Plug 'tpope/vim-surround' " cs ds 
+ 	Plug 'arzg/vim-colors-xcode'
+	if has('python')
+		Plug 'Valloric/MatchTagAlways'
 	endif
-	Plugin 'tComment' "[v]gc [n]gcc
-	Plugin 'bash-support.vim',{'pinned':1}
-	Plugin 'perl-support.vim',{'pinned':1}
-	Plugin 'terryma/vim-multiple-cursors' " <c-n> search and select multiple
-	Plugin 'majutsushi/tagbar' " :Tagbar
-	Plugin 'Lokaltog/vim-easymotion' " \\w \\f
-"	Plugin 'Konfekt/FastFold'
-	Plugin 'tpope/vim-characterize' " [n]ga
-	Plugin 'ctrlpvim/ctrlp.vim' " [n]<c-p> browse files
-	Plugin 'mattn/emmet-vim' "<c-y>,
-	Plugin 'Valloric/MatchTagAlways'
-"	Plugin 'junegunn/fzf.vim'
-	Plugin 'tpope/vim-eunuch' " Delete Unlink Move Rename Chmod Mkdir Cfind Wall SudoWrite SudoEdit
-	Plugin 'tpope/vim-surround' " cs ds 
+ 	if has('patch-8.0.1453')
+ 		Plug 'fatih/vim-go'
+ 	endif
 	if $TERM!~"^vt"
-		if has("lua") "&& has('win32')
-			if v:version > 703 || (v:version == 703 && has("patch885"))
-				Plugin 'Shougo/neocomplete'
-			endif
+		if has("lua") && has("patch-7.3.885") && !has('patch-8.2.1066')
+			Plug 'Shougo/neocomplete'
+		else
+			Plug 'ajh17/VimCompletesMe'
 		endif
 	endif
-	if has('win32')
-		Plugin 'Shougo/vimproc.vim'
-		Plugin 'Shougo/vimshell.vim'
-		Plugin 'Shougo/unite.vim'
-	endif
-	Plugin 'arzg/vim-colors-xcode'
-	call vundle#end()
-endif "}}}
+ 	if has('win32')
+ 		Plug 'Shougo/vimproc.vim'
+ 		Plug 'Shougo/vimshell.vim'
+ 		Plug 'Shougo/unite.vim'
+ 	endif
+	call plug#end()
+endif
+
 "}}}
 
 filetype plugin on
 filetype indent on
-
 
 func! s:findplugin(pluginName) "{{{
 	let rtplist = filter(map(split(&rtp,","),
@@ -441,16 +513,37 @@ function! SetBackgroundMode(...) "{{{
         else
             let s:new_bg = "light"
         endif
-    endif
+	elseif has('win32') && !has('gui_running')
+		let s:new_bg = "dark"
+	endif
     if &background !=? s:new_bg
         let &background = s:new_bg
     endif
 	if &background == 'dark'
 		try
 			colorscheme xcodedark
+		catch /^Vim\%((\a\+)\)\=:E185:/
 		endtry
 	endif
 endfunction "}}}
+
+func! s:vimrc() "{{{
+	if has('unix')
+		if findfile('~/.vimrc') != ''
+			tabnew ~/.vimrc
+		elseif findfile("$VIM/.vimrc") != ''
+			tabnew $VIM/.vimrc
+		endif
+	elseif has('win32')
+		if findfile('$VIM/../.vimrc') != ''
+			tabnew $VIM/../.vimrc
+		elseif findfile('~/_vimrc') != ''
+			tabnew ~/_vimrc
+		elseif findfile("$VIM/_vimrc") != ''
+			tabnew $VIM/_vimrc
+		endif
+	endif
+endfunc "}}}
 
 "{{{ input comma quote pair
 
@@ -742,33 +835,33 @@ if !exists('g:neocomplete#force_omni_input_patterns')
 let g:neocomplete#force_omni_input_patterns.php =  '\h\w*\|[^- \t]->\w*'
 let g:neocomplete#sources#omni#input_patterns.php = '[^. \t]->\h\w*\|\h\w*::'
 func! s:_augroup_neocomplete()
-augroup _neocomplete
-au!
-au FileType css setlocal omnifunc=csscomplete#CompleteCSS
-au FileType html,markdown setlocal omnifunc=htmlcomplete#CompleteTags
-au FileType javascript setlocal omnifunc=javascriptcomplete#CompleteJS
-au FileType python setlocal omnifunc=pythoncomplete#Complete
-au FileType xml setlocal omnifunc=xmlcomplete#CompleteTags
-augroup END
-func! s:closeOnVisible()
-	if pumvisible()
-		return neocomplete#close_popup()
+	augroup _neocomplete
+		au!
+		au FileType css setlocal omnifunc=csscomplete#CompleteCSS
+		au FileType html,markdown setlocal omnifunc=htmlcomplete#CompleteTags
+		au FileType javascript setlocal omnifunc=javascriptcomplete#CompleteJS
+		au FileType python setlocal omnifunc=pythoncomplete#Complete
+		au FileType xml setlocal omnifunc=xmlcomplete#CompleteTags
+	augroup END
+	func! s:closeOnVisible()
+		if pumvisible()
+			return neocomplete#close_popup()
+		endif
+		return ''
+	endfunc
+	inoremap <expr> <C-g> neocomplete#undo_completion()
+	inoremap <expr> <C-l> neocomplete#complete_common_string()
+	inoremap <expr> <TAB> pumvisible() ? "\<C-n>" : "\<TAB>"
+	inoremap <expr> <S-TAB> pumvisible() ? "\<C-p>" : "\<S-TAB>"
+	inoremap <expr> <C-h> neocomplete#smart_close_popup()."\<C-h>"
+	inoremap <expr> <BS> neocomplete#smart_close_popup()."\<C-h>"
+	"inoremap <expr> <CR> pumvisible()?neocomplete#close_popup()."\<CR>":"\<CR>"
+	if !exists('g:loaded_delimitMate')
+		inoremap <CR> <C-r>=<SID>closeOnVisible()<CR><C-r>=<SID>rstrip()<CR><CR>
+	else
+		imap <CR> <C-r>=<SID>closeOnVisible()<CR><C-r>=<SID>rstrip()<CR><Plug>delimitMateCR
 	endif
-	return ''
-endfunc
-inoremap <expr> <C-g> neocomplete#undo_completion()
-inoremap <expr> <C-l> neocomplete#complete_common_string()
-inoremap <expr> <TAB> pumvisible() ? "\<C-n>" : "\<TAB>"
-inoremap <expr> <S-TAB> pumvisible() ? "\<C-p>" : "\<S-TAB>"
-inoremap <expr> <C-h> neocomplete#smart_close_popup()."\<C-h>"
-inoremap <expr> <BS> neocomplete#smart_close_popup()."\<C-h>"
-"inoremap <expr> <CR> pumvisible()?neocomplete#close_popup()."\<CR>":"\<CR>"
-if !exists('g:loaded_delimitMate')
-inoremap <CR> <C-r>=<SID>closeOnVisible()<CR><C-r>=<SID>rstrip()<CR><CR>
-else
-imap <CR> <C-r>=<SID>closeOnVisible()<CR><C-r>=<SID>rstrip()<CR><Plug>delimitMateCR
-endif
-NeoCompleteEnable
+	NeoCompleteEnable
 endfunc
 augroup _neocomplete
 	au!
@@ -862,7 +955,7 @@ nnoremap ¥ \
 "%n : buffer number
 
 let s:previousMode = ''
-let s:STLColor = {
+let g:stl_color = {
 			\'n':"%#NSTL#",
 			\'i':"%#ISTL#",
 			\'v':"%#VSTL#",
@@ -870,7 +963,7 @@ let s:STLColor = {
 			\nr2char(22):"%#CVSTL#",
 			\'R':"%#RSTL#", 
 			\'c':"%#CSTL#"}
-let s:MIColor = {
+let g:stl_micolor = {
 			\'n':"%#NMI#",
 			\'i':"%#IMI#",
 			\'v':"%#VMI#",
@@ -929,71 +1022,66 @@ func! RedrawSTLColor(m) "{{{
 	endif
 	return ''
 endfunc "}}}
-func! s:fixedSTL() "{{{
-	if has('gui_running')
+if has('gui_running') "{{{  s:fixedSTL
+	func! s:fixedSTL()
 		let &l:stl = '%F%r'.Supnr(bufnr('%')).'%{(&mod==1)?"⁺":""}%=%{(&co>70)?strftime("┊%I:%M%p"):""}%{(&co>50)?"'.((&fenc!="")?"┊".&fenc:"│nil").'":""}┊'.toupper(&ff[0]).'┊'.((&ft!="")?&ft:"nil").'┊%l,%c┊%L%{RedrawSTLColor(mode())}'
-	else
+	endfunc
+else
+	func! s:fixedSTL()
 		set statusline=%F%m%r%=\|%n%{(&co>70)?strftime(\"\|%H:%M\"):''}%{(&co>50)?(&fenc!='')?'\|'.&fenc:'\|nil':''}\|%{toupper(&ff[0])}\|%{(&ft!='')?&ft:'nil'}\|%l,%c\|%L 
-	endif
+	endfunc
+endif
+"}}}
+" function! s:bufnew_b_vars() "{{{
+" 	if !exists('b:buffer_num') | let b:buffer_num = ""  | endif
+" 	if !exists('b:buffer_enc') | let b:buffer_enc = "nil" | endif
+" 	if !exists('b:buffer_ft')  | let b:buffer_ft = 'nil' | endif
+" 	if has('win32') | let b:stlsep = '│' | else | let b:stlsep = '┊' | endif
+" endfunc "}}}
+function! s:update_stl_vars() "{{{
+	if has('win32') | let g:stl_sep = '│' | else | let g:stl_sep = '┊' | endif
+	let g:stl_bufnum = Supnr(bufnr())
+	let g:stl_bufenc = (&fenc!='')?toupper(&fenc):'nil'
+	let g:stl_bufft  = (&ft!='')?&ft:'nil'
 endfunc "}}}
-function! s:bufnew_b_vars() "{{{
-	if !exists('b:buffer_num') | let b:buffer_num = ""  | endif
-	if !exists('b:buffer_enc') | let b:buffer_enc = "nil" | endif
-	if !exists('b:buffer_ft')  | let b:buffer_ft = 'nil' | endif
-	if has('win32') | let b:stlsep = '│' | else | let b:stlsep = '┊' | endif
-endfunc "}}}
-function! StatusLine() "{{{
-	return s:STLColor[mode()]."%F%r%{b:buffer_num}".s:MIColor[mode()]."%{(&mod==1)?'⁺':''}%*".s:STLColor[mode()]."%=%{(&co>70)?b:stlsep.strftime('%H:%M'):''}%{b:stlsep}%{b:buffer_enc}%{b:stlsep}%{toupper(&ff[0])}%{b:stlsep}%2{b:buffer_ft}%{b:stlsep}%5(%l,%c%)%{b:stlsep}%L%*"
-endfunc "}}}
-function! StatusLineTerm() "{{{
-	return "%F%r%{(&mod==1)?'+':''}%*%=|%n%{(&co>70)?strftime('|%H:%M'):''}|%{b:buffer_enc}|%{toupper(&ff[0])}|%2{b:buffer_ft}|%5(%l,%c%)|%L%*"
+" function! StatusLine() "{{{
+" 	return s:STLColor[mode()]."%F%r%{b:buffer_num}".s:MIColor[mode()]."%{(&mod==1)?'⁺':''}%*".s:STLColor[mode()]."%=%{(&co>70)?b:stlsep.strftime('%H:%M'):''}%{b:stlsep}%{b:buffer_enc}%{b:stlsep}%{toupper(&ff[0])}%{b:stlsep}%2{b:buffer_ft}%{b:stlsep}%5(%l,%c%)┊%L%*"
+" endfunc "}}}
+function! StatusLineGui() "{{{
+	return get(g:stl_color,mode(),'').'%F%r'.g:stl_bufnum.get(g:stl_micolor,mode(),"").(&mod==1?"+":"")."%*".get(g:stl_color,mode(),"")."%=".(&co>70?g:stl_sep.strftime("%H:%M"):"").g:stl_sep.g:stl_bufenc.g:stl_sep.toupper(&ff[0]).g:stl_sep."%2(".g:stl_bufft."%)".g:stl_sep."%5(%l,%c%)".g:stl_sep."%L%*"
 endfunc "}}}
 
+" function! StatusLineTerm() "{{{
+" 	return "%F%r%{(&mod==1)?'+':''}%*%=|%n%{(&co>70)?strftime('|%H:%M'):''}|".g:stl_bufenc}."|%{toupper(&ff[0])}|%2(".g:stl_bufft."%)|%5(%l,%c%)|%L%*"
+" endfunc "}}}
+
 "{{{ set statusline
-augroup statusline
-	if has('macunix') && !has('gui_vimr')
+if has('macunix') && !has('gui_vimr')
+	augroup statusline
 		au!
-		au BufReadPost,BufWritePost,FileType,EncodingChanged * call <SID>fixedSTL()
+		au BufEnter,BufReadPost,BufWritePost,FileType,EncodingChanged * call <SID>fixedSTL()
 		au FileType help,qf setlocal statusline=%f%=│%P│%L foldcolumn=0 number
+	augroup END
+else
+	call <SID>update_stl_vars()
+	if has('gui_running')
+		set statusline=%!StatusLineGui()
 	else
-		setlocal statusline=%!StatusLine()
-		au BufEnter * call s:bufnew_b_vars()
-		au BufWinEnter,BufWritePost * let b:buffer_num = Supnr(bufnr())
-		if has('gui_running')
-			au BufWinEnter,BufWritePost * setlocal statusline=%!StatusLine()
-		else
-			au BufWinEnter,BufWritePost * setlocal statusline=%!StatusLineTerm()
-		endif
-		au BufReadPost,EncodingChanged * let b:buffer_enc = (&fenc!='')?toupper(&fenc):'nil'
-		au FileType help,qf setlocal statusline=%h\ %f%=┊%n┊%P┊%L foldcolumn=0 number
-		au FileType * let b:buffer_ft = (&ft!='')?&ft:'nil'
-		au CmdlineEnter * redrawstatus
+		set statusline=%F%r%{(&mod==1)?\"+\":\"\"}%*%=\|%n%{&co>70?strftime(\"\|%H:%M\"):\"\"}\|%{g:stl_bufenc}\|%{toupper(&ff[0])}\|%2{g:stl_bufft}\|%5(%l,%c%)\|%L%*
 	endif
-augroup END
+	augroup statusline
+		au!
+		au BufReadPost,BufWritePost,FileType,EncodingChanged * call <SID>update_stl_vars()
+		au FileType help,qf setlocal statusline=%h\ %f%=┊%n┊%P┊%L foldcolumn=0 number
+		au CmdlineEnter * redrawstatus
+	augroup END
+endif
 "}}}
 
 "}}}
 
 augroup Commands "{{{
 	command! -range -nargs=0 Trimdot :<line1>,<line2>s/\.\+\([^\.]\+\)\(\.\)\@=/ \1/ge|:nohl
-
-func! s:vimrc() "{{{
-	if has('unix')
-		if findfile('~/.vimrc') != ''
-			tabnew ~/.vimrc
-		elseif findfile("$VIM/.vimrc") != ''
-			tabnew $VIM/.vimrc
-		endif
-	elseif has('win32')
-		if findfile('$VIM/../.vimrc') != ''
-			tabnew $VIM/../.vimrc
-		elseif findfile('~/_vimrc') != ''
-			tabnew ~/_vimrc
-		elseif findfile("$VIM/_vimrc") != ''
-			tabnew $VIM/_vimrc
-		endif
-	endif
-endfunc "}}}
 	command! Vimrc call <SID>vimrc()
 	command! -nargs=? NF echo len(split(getline('.'),<q-args>!=""?<q-args>:'\s\+'))
 	command! -nargs=? NC echo len(split(getline('.')[0:col('.')-1],<q-args>!=""?<q-args>:'\s\+'))
@@ -1136,8 +1224,7 @@ augroup END
 augroup reload_vimrc "{{{
 	au!
 	au BufWritePost $MYVIMRC source $MYVIMRC | 
-				\call SetBackgroundMode() |
-				\call s:bufnew_b_vars()
+				\call SetBackgroundMode()
 augroup END "}}}
 
 augroup vim_help_keybind "{{{
@@ -1233,7 +1320,7 @@ func! s:curfiledir() "{{{
 	endif
 endfunc "}}}
 au BufEnter * call <SID>curfiledir()
-au BufReadPost * call SetBackgroundMode()
+au BufEnter * call SetBackgroundMode()
 
 func! s:resCur() "{{{
 	if line("'\"") <= line("$")
